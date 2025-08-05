@@ -2,26 +2,285 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@media (prefers-color-scheme: dark) {
+@layer base {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    /* Navigation height for positioning overlays */
+    /* Bottom nav calculation: py-2 (8px top + 8px bottom) + icon (24px) + mt-1 (4px) + text (~14px) + border (1px) = 59px base */
+    --navigation-base-height: 59px;
+    --navigation-height: calc(var(--navigation-base-height) + env(safe-area-inset-bottom, 16px));
+    --navigation-clearance: calc(var(--navigation-height) + 16px);
+    
+    /* Fallback values for reliable positioning */
+    --navigation-height-fallback: 75px; /* 59px + 16px estimated safe area */
+    --navigation-clearance-fallback: 91px; /* fallback height + 16px margin */
+    
+    /* Simplified mobile positioning - just use a safe value that works */
+    --mobile-bottom-safe: 95px; /* Conservative safe distance from bottom */
+    
+    /* Design system color variables */
+    --color-primary: #1e3a8a;
+    --color-primary-hover: #1e40af;
+    --color-primary-light: #3b82f6;
+    
+    /* Feedback colors */
+    --color-success: #10b981;
+    --color-warning: #f59e0b;
+    --color-error: #ef4444;
+    --color-info: #06b6d4;
+    
+    /* Neutral colors */
+    --color-text-primary: #334155;
+    --color-text-secondary: #64748b;
+    --color-background: #ffffff;
+    --color-surface: #f8fafc;
+    --color-border: #e2e8f0;
+  }
+
+  * {
+    @apply border-gray-200;
+  }
+
+  body {
+    @apply bg-gray-50 text-gray-900 font-sans;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  /* Smooth scrolling */
+  html {
+    scroll-behavior: smooth;
+  }
+
+  /* Remove focus outline on mouse click but keep for keyboard */
+  *:focus:not(:focus-visible) {
+    outline: none;
+  }
+
+  /* Custom focus styles */
+  *:focus-visible {
+    @apply outline-none ring-4 ring-primary-200;
   }
 }
 
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+@layer components {
+  /* Safe area utilities for mobile devices */
+  .safe-area-inset-top {
+    padding-top: env(safe-area-inset-top);
+  }
+  
+  .safe-area-inset-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  
+  .safe-area-inset-left {
+    padding-left: env(safe-area-inset-left);
+  }
+  
+  .safe-area-inset-right {
+    padding-right: env(safe-area-inset-right);
+  }
+
+  /* Custom scrollbar */
+  .custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 #f1f5f9;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 3px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 3px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+  }
+
+  /* Loading spinner */
+  .spinner {
+    @apply inline-block animate-spin rounded-full border-2 border-solid border-current border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite];
+  }
+
+  /* Text truncation utilities */
+  .text-truncate-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .text-truncate-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .line-clamp-1 {
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* Button base styles */
+  .btn-base {
+    @apply inline-flex items-center justify-center font-medium rounded-lg transition-all duration-200 focus:ring-4 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  /* Card hover effects */
+  .card-hover {
+    @apply transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg;
+  }
+
+  /* Glass morphism effect */
+  .glass {
+    backdrop-filter: blur(16px) saturate(180%);
+    background-color: rgba(255, 255, 255, 0.75);
+    border: 1px solid rgba(209, 213, 219, 0.3);
+  }
 }
 
 @layer utilities {
-  .text-balance {
-    text-wrap: balance;
+  /* Hide scrollbar */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Dropdown positioning utilities */
+  .dropdown-menu {
+    z-index: 9999 !important;
+    position: absolute !important;
+  }
+
+  .menu-container {
+    position: relative;
+    z-index: 1000;
+  }
+
+  /* Custom transitions */
+  .transition-transform-opacity {
+    transition: transform 0.2s ease-out, opacity 0.2s ease-out;
+  }
+
+  /* Mobile-specific utilities */
+  .touch-pan-x {
+    touch-action: pan-x;
+  }
+
+  .touch-pan-y {
+    touch-action: pan-y;
+  }
+
+  .touch-none {
+    touch-action: none;
+  }
+
+  /* iOS-style momentum scrolling */
+  .momentum-scroll {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Navigation-aware positioning */
+  .above-navigation {
+    bottom: var(--navigation-clearance, var(--navigation-clearance-fallback, 91px)) !important;
+  }
+  
+  /* Mobile: use navigation clearance, Desktop: use standard spacing */
+  .mobile-above-nav {
+    bottom: var(--mobile-bottom-safe, 95px) !important;
+    position: fixed !important;
+    z-index: 60 !important;
+  }
+  
+  /* Desktop override - smaller bottom margin */
+  @media (min-width: 768px) {
+    .mobile-above-nav {
+      bottom: 1.5rem !important;
+    }
+  }
+  
+  /* Tablet override */
+  @media (min-width: 640px) and (max-width: 767px) {
+    .mobile-above-nav {
+      bottom: var(--navigation-clearance, 85px) !important;
+    }
+  }
+  
+  /* Reliable positioning utility that always works */
+  .fixed-above-nav {
+    position: fixed !important;
+    bottom: 95px !important;
+    z-index: 60 !important;
+  }
+  
+  /* Additional positioning utilities for debugging */
+  .debug-positioning {
+    outline: 2px solid red !important;
+    background: rgba(255, 0, 0, 0.1) !important;
+  }
+  
+  .above-nav-test {
+    bottom: 100px !important;
+    position: fixed !important;
+    background: rgba(0, 255, 0, 0.5) !important;
+    z-index: 45 !important;
+  }
+  
+  /* Quick positioning classes for testing */
+  .test-80 { bottom: 80px !important; position: fixed !important; z-index: 65 !important; }
+  .test-90 { bottom: 90px !important; position: fixed !important; z-index: 65 !important; }
+  .test-100 { bottom: 100px !important; position: fixed !important; z-index: 65 !important; }
+  .test-110 { bottom: 110px !important; position: fixed !important; z-index: 65 !important; }
+  
+  /* Emergency positioning utility - guaranteed to work */
+  .emergency-above-nav {
+    position: fixed !important;
+    bottom: 100px !important;
+    z-index: 9999 !important;
+    pointer-events: auto !important;
+  }
+}
+
+/* Print styles */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+}
+
+/* Reduce motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }

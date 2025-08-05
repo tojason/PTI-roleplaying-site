@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Tutorial Debug</title>
+</head>
+<body>
+    <h1>Tutorial State Debug</h1>
+    <pre id="localStorage-dump"></pre>
+    <pre id="sessionStorage-dump"></pre>
+    
+    <script>
+        // Check localStorage for the store data
+        const localData = localStorage.getItem('police-training-app');
+        document.getElementById('localStorage-dump').innerHTML = 
+            'LocalStorage (police-training-app):\n' + 
+            (localData ? JSON.stringify(JSON.parse(localData), null, 2) : 'Not found');
+        
+        // Check sessionStorage 
+        const sessionData = sessionStorage.getItem('police-training-app');
+        document.getElementById('sessionStorage-dump').innerHTML = 
+            'SessionStorage (police-training-app):\n' + 
+            (sessionData ? JSON.stringify(JSON.parse(sessionData), null, 2) : 'Not found');
+    </script>
+</body>
+</html>

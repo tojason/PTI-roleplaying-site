@@ -1,0 +1,376 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User model for authentication and profile management
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  pid       String   @unique // Police ID for authentication and identification
+  badgeNumber String? @unique @map("badge_number") // Separate badge number field
+  department String?
+  rank      String?
+  phone     String?
+  avatar    String?
+  
+  // Settings
+  emailVerified DateTime? @map("email_verified")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  lastLoginAt   DateTime? @map("last_login_at")
+  isActive      Boolean   @default(true) @map("is_active")
+  
+  // Roles and permissions
+  role          UserRole  @default(USER)
+  permissions   String[]  @default([])
+  
+  // Relationships
+  quizSessions        QuizSession[]
+  voicePracticeSessions VoicePracticeSession[]
+  progress            Progress[]
+  achievements        UserAchievement[]
+  voiceSettings       VoiceSettings?
+  accounts            Account[]
+  sessions            Session[]
+  
+  @@index([email], map: "idx_users_email")
+  @@index([pid], map: "idx_users_pid")
+  @@index([badgeNumber], map: "idx_users_badge_number")
+  @@index([createdAt], map: "idx_users_created_at")
+  @@map("users")
+}
+
+// Account model for NextAuth.js
+model Account {
+  id                String  @id @default(cuid())
+  userId            String  @map("user_id")
+  type              String
+  provider          String
+  providerAccountId String  @map("provider_account_id")
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+// Session model for NextAuth.js
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique @map("session_token")
+  userId       String   @map("user_id")
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+// Verification token model for NextAuth.js
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verificationtokens")
+}
+
+// User roles enum
+enum UserRole {
+  USER
+  INSTRUCTOR
+  ADMIN
+  SUPER_ADMIN
+}
+
+// Quiz categories enum
+enum QuizCategory {
+  CODES_10
+  PHONETIC_ALPHABET
+  RADIO_PROTOCOL
+  MIXED
+}
+
+// Voice practice categories enum
+enum VoiceCategory {
+  PHONETIC
+  RADIO_PROTOCOL
+  CODES
+}
+
+// Difficulty levels enum
+enum DifficultyLevel {
+  EASY
+  MEDIUM
+  HARD
+}
+
+// Accuracy categories enum
+enum AccuracyCategory {
+  EXCELLENT
+  GOOD
+  NEEDS_IMPROVEMENT
+  POOR
+}
+
+// Quiz questions model
+model QuizQuestion {
+  id          String        @id @default(cuid())
+  category    QuizCategory
+  difficulty  DifficultyLevel @default(EASY)
+  question    String
+  options     String[]      // Array of answer options
+  correctAnswer String      @map("correct_answer")
+  explanation String?
+  audioUrl    String?       @map("audio_url")
+  tags        String[]      @default([])
+  isActive    Boolean       @default(true) @map("is_active")
+  
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+  
+  // Relationships
+  quizResponses QuizResponse[]
+  
+  @@map("quiz_questions")
+}
+
+// Quiz sessions model
+model QuizSession {
+  id              String        @id @default(cuid())
+  userId          String        @map("user_id")
+  category        QuizCategory
+  difficulty      DifficultyLevel @default(EASY)
+  
+  // Session data
+  totalQuestions  Int           @map("total_questions")
+  correctAnswers  Int           @map("correct_answers")
+  score           Float         // Percentage score
+  duration        Int           // Duration in seconds
+  completedAt     DateTime?     @map("completed_at")
+  
+  // Session status
+  status          SessionStatus @default(IN_PROGRESS)
+  startedAt       DateTime      @default(now()) @map("started_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
+  
+  // Relationships
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  responses       QuizResponse[]
+  
+  @@map("quiz_sessions")
+}
+
+// Quiz responses model
+model QuizResponse {
+  id            String      @id @default(cuid())
+  sessionId     String      @map("session_id")
+  questionId    String      @map("question_id")
+  userAnswer    String      @map("user_answer")
+  isCorrect     Boolean     @map("is_correct")
+  timeSpent     Int         @map("time_spent") // Time spent in seconds
+  answeredAt    DateTime    @default(now()) @map("answered_at")
+  
+  // Relationships
+  session       QuizSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  question      QuizQuestion @relation(fields: [questionId], references: [id])
+  
+  @@unique([sessionId, questionId])
+  @@map("quiz_responses")
+}
+
+// Session status enum
+enum SessionStatus {
+  IN_PROGRESS
+  COMPLETED
+  ABANDONED
+}
+
+// Voice scenarios model
+model VoiceScenario {
+  id                String        @id @default(cuid())
+  title             String
+  instruction       String
+  targetText        String        @map("target_text")
+  expectedAnswer    String        @map("expected_answer")
+  category          VoiceCategory
+  difficulty        DifficultyLevel @default(EASY)
+  tags              String[]      @default([])
+  estimatedDuration Int           @default(30) @map("estimated_duration") // seconds
+  isActive          Boolean       @default(true) @map("is_active")
+  
+  createdAt         DateTime      @default(now()) @map("created_at")
+  updatedAt         DateTime      @updatedAt @map("updated_at")
+  
+  // Relationships
+  voicePracticeSessions VoicePracticeSession[]
+  
+  @@map("voice_scenarios")
+}
+
+// Voice practice sessions model
+model VoicePracticeSession {
+  id              String           @id @default(cuid())
+  userId          String           @map("user_id")
+  scenarioId      String           @map("scenario_id")
+  
+  // Speech data
+  userSpeech      String           @map("user_speech")
+  accuracyScore   Int              @map("accuracy_score") // 0-100
+  accuracyCategory AccuracyCategory @map("accuracy_category")
+  accuracyDetails Json             @map("accuracy_details") // Full VoiceAccuracyResult
+  
+  // Session metadata
+  duration        Int              // Duration in seconds
+  status          SessionStatus    @default(COMPLETED)
+  createdAt       DateTime         @default(now()) @map("created_at")
+  updatedAt       DateTime         @updatedAt @map("updated_at")
+  
+  // Relationships
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  scenario        VoiceScenario    @relation(fields: [scenarioId], references: [id])
+  
+  @@map("voice_practice_sessions")
+}
+
+// Voice settings model
+model VoiceSettings {
+  userId              String           @id @map("user_id")
+  language            String           @default("en-US")
+  sensitivity         VoiceSensitivity @default(MEDIUM)
+  autoStop            Boolean          @default(true) @map("auto_stop")
+  maxRecordingTime    Int              @default(30) @map("max_recording_time") // seconds
+  practiceReminders   Boolean          @default(true) @map("practice_reminders")
+  difficultyLevel     DifficultyLevel  @default(EASY) @map("difficulty_level")
+  
+  createdAt           DateTime         @default(now()) @map("created_at")
+  updatedAt           DateTime         @updatedAt @map("updated_at")
+  
+  // Relationships
+  user                User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("voice_settings")
+}
+
+// Voice sensitivity enum
+enum VoiceSensitivity {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+// Progress tracking model
+model Progress {
+  id                String        @id @default(cuid())
+  userId            String        @map("user_id")
+  category          String        // e.g., "quiz", "voice", "overall"
+  subcategory       String?       // e.g., "10_codes", "phonetic", etc.
+  
+  // Progress metrics
+  totalSessions     Int           @default(0) @map("total_sessions")
+  correctAnswers    Int           @default(0) @map("correct_answers")
+  totalQuestions    Int           @default(0) @map("total_questions")
+  averageAccuracy   Float         @default(0) @map("average_accuracy")
+  bestAccuracy      Float         @default(0) @map("best_accuracy")
+  totalTimeSpent    Int           @default(0) @map("total_time_spent") // seconds
+  currentStreak     Int           @default(0) @map("current_streak")
+  longestStreak     Int           @default(0) @map("longest_streak")
+  
+  // Timestamps
+  lastPracticed     DateTime?     @map("last_practiced")
+  createdAt         DateTime      @default(now()) @map("created_at")
+  updatedAt         DateTime      @updatedAt @map("updated_at")
+  
+  // Relationships
+  user              User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, category, subcategory])
+  @@map("progress")
+}
+
+// Achievements model
+model Achievement {
+  id          String        @id @default(cuid())
+  name        String        @unique
+  title       String
+  description String
+  category    String        // e.g., "quiz", "voice", "streak", "accuracy"
+  icon        String
+  badgeColor  String        @map("badge_color")
+  
+  // Achievement criteria
+  criteria    Json          // Flexible criteria definition
+  points      Int           @default(0)
+  isActive    Boolean       @default(true) @map("is_active")
+  
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+  
+  // Relationships
+  userAchievements UserAchievement[]
+  
+  @@map("achievements")
+}
+
+// User achievements model
+model UserAchievement {
+  id            String      @id @default(cuid())
+  userId        String      @map("user_id")
+  achievementId String      @map("achievement_id")
+  unlockedAt    DateTime    @default(now()) @map("unlocked_at")
+  
+  // Relationships
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievement   Achievement @relation(fields: [achievementId], references: [id])
+  
+  @@unique([userId, achievementId])
+  @@map("user_achievements")
+}
+
+// 10-codes reference model
+model TenCode {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  meaning     String
+  category    String?  // e.g., "emergency", "traffic", "administrative"
+  usage       String?  // Usage context or example
+  isCommon    Boolean  @default(false) @map("is_common")
+  
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  
+  @@map("ten_codes")
+}
+
+// Phonetic alphabet reference model
+model PhoneticAlphabet {
+  id           String   @id @default(cuid())
+  letter       String   @unique
+  phoneticWord String   @map("phonetic_word")
+  pronunciation String?
+  example      String?
+  
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+  
+  @@map("phonetic_alphabet")
+}
+
+// Indexes are defined within each model above
