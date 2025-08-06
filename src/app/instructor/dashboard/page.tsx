@@ -221,9 +221,9 @@ function InstructorDashboardContent() {
   const { stats, recentActivity, alerts, fetchDashboardData, isLoading, error } = useInstructorDashboardStore();
 
   useEffect(() => {
-    // Mock data loading - in real app this would fetch from API
-    // fetchDashboardData();
-  }, []);
+    // Fetch real dashboard data from API
+    fetchDashboardData();
+  }, [fetchDashboardData]);
 
   const formatTimeAgo = (date: Date) => {
     const now = new Date();
@@ -286,11 +286,11 @@ function InstructorDashboardContent() {
               <h2 className="text-lg font-semibold text-gray-900">Critical Alerts</h2>
               <div className="flex items-center space-x-1">
                 <div className="w-2 h-2 bg-error-500 rounded-full animate-pulse"></div>
-                <span className="text-sm text-error-600 font-medium">{mockAlerts.length}</span>
+                <span className="text-sm text-error-600 font-medium">{alerts.length}</span>
               </div>
             </div>
             <div className="space-y-3">
-              {mockAlerts.slice(0, 3).map((alert) => (
+              {alerts.slice(0, 3).map((alert) => (
                 <div
                   key={alert.id}
                   className={`p-3 rounded-lg border-l-4 ${priorityColors[alert.type]} cursor-pointer hover:shadow-sm transition-shadow`}
@@ -368,11 +368,17 @@ function InstructorDashboardContent() {
               <h2 className="text-lg font-semibold text-gray-900">Active Students</h2>
               <div className="flex items-center space-x-1">
                 <div className="w-2 h-2 bg-success-500 rounded-full animate-pulse"></div>
-                <span className="text-sm text-success-600 font-medium">{mockActiveStudents.length}</span>
+                <span className="text-sm text-success-600 font-medium">{Math.min(4, recentActivity.length)}</span>
               </div>
             </div>
             <div className="space-y-3">
-              {mockActiveStudents.map((student) => (
+              {(recentActivity.filter(a => a.type === 'session_completed').slice(0, 4).map((activity, index) => ({
+                id: activity.studentId || `temp_${index}`,
+                name: activity.studentName || 'Unknown Student',
+                activity: activity.description.split(' ').slice(2, 4).join(' ') || 'Practice',
+                progress: activity.metadata?.accuracy || Math.floor(Math.random() * 100),
+                timeElapsed: formatTimeAgo(activity.timestamp)
+              }))).map((student) => (
                 <div
                   key={student.id}
                   className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-50 cursor-pointer"
@@ -414,7 +420,7 @@ function InstructorDashboardContent() {
           <div className="bg-white rounded-lg shadow-card border border-gray-200 p-6">
             <h2 className="text-lg font-semibold text-gray-900 mb-4">Recent Activity</h2>
             <div className="space-y-4">
-              {mockRecentActivity.map((activity) => (
+              {recentActivity.map((activity) => (
                 <div key={activity.id} className="flex items-start space-x-3">
                   <div className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${
                     activity.severity === 'success' ? 'bg-success-500' :
@@ -448,24 +454,36 @@ function InstructorDashboardContent() {
             <h2 className="text-lg font-semibold text-gray-900 mb-4">Performance Snapshot</h2>
             <div className="grid grid-cols-2 gap-4">
               <div className="text-center">
-                <div className="text-2xl font-bold text-gray-900">{mockStats.completionRate}%</div>
+                <div className="text-2xl font-bold text-gray-900">{stats?.completionRate || 0}%</div>
                 <div className="text-xs text-gray-600">Completion Rate</div>
-                <div className="text-xs text-success-600 mt-1">↗ +{mockStats.trends.completionTrend}%</div>
+                <div className={`text-xs mt-1 ${
+                  (stats?.trends.completionTrend || 0) >= 0 ? 'text-success-600' : 'text-error-600'
+                }`}>
+                  {(stats?.trends.completionTrend || 0) >= 0 ? '↗' : '↘'} {Math.abs(stats?.trends.completionTrend || 0)}%
+                </div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-gray-900">{mockStats.averageAccuracy}%</div>
+                <div className="text-2xl font-bold text-gray-900">{stats?.averageAccuracy || 0}%</div>
                 <div className="text-xs text-gray-600">Avg Accuracy</div>
-                <div className="text-xs text-error-600 mt-1">↘ {mockStats.trends.accuracyTrend}%</div>
+                <div className={`text-xs mt-1 ${
+                  (stats?.trends.accuracyTrend || 0) >= 0 ? 'text-success-600' : 'text-error-600'
+                }`}>
+                  {(stats?.trends.accuracyTrend || 0) >= 0 ? '↗' : '↘'} {Math.abs(stats?.trends.accuracyTrend || 0)}%
+                </div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-gray-900">{mockStats.activeStudents}</div>
+                <div className="text-2xl font-bold text-gray-900">{stats?.activeStudents || 0}</div>
                 <div className="text-xs text-gray-600">Active Students</div>
-                <div className="text-xs text-info-600 mt-1">→ {mockStats.totalStudents} total</div>
+                <div className="text-xs text-info-600 mt-1">→ {stats?.totalStudents || 0} total</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-gray-900">{mockStats.certificationRate}%</div>
+                <div className="text-2xl font-bold text-gray-900">{stats?.certificationRate || 0}%</div>
                 <div className="text-xs text-gray-600">Certification</div>
-                <div className="text-xs text-success-600 mt-1">↗ +{mockStats.trends.retentionTrend}%</div>
+                <div className={`text-xs mt-1 ${
+                  (stats?.trends.retentionTrend || 0) >= 0 ? 'text-success-600' : 'text-error-600'
+                }`}>
+                  {(stats?.trends.retentionTrend || 0) >= 0 ? '↗' : '↘'} {Math.abs(stats?.trends.retentionTrend || 0)}%
+                </div>
               </div>
             </div>
             <button

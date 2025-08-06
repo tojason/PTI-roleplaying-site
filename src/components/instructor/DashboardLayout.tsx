@@ -1,6 +1,7 @@
 'use client';
 
 import { ReactNode, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { InstructorUser } from '@/types/instructor';
 import { InstructorNavbar } from './InstructorNavbar';
 import { BottomNavigation } from './BottomNavigation';
@@ -15,6 +16,28 @@ interface DashboardLayoutProps {
 
 export function DashboardLayout({ children, user, className }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const router = useRouter();
+
+  const handleQuickAction = (action: string) => {
+    switch (action) {
+      case 'add-student':
+        router.push('/instructor/students/add');
+        break;
+      case 'create-assignment':
+        router.push('/instructor/assignments/create');
+        break;
+      case 'send-message':
+        router.push('/instructor/messages/compose');
+        break;
+      case 'generate-report':
+        alert('Coming soon');
+        break;
+      default:
+        break;
+    }
+    // Close sidebar on mobile after navigation
+    setSidebarOpen(false);
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -56,16 +79,28 @@ export function DashboardLayout({ children, user, className }: DashboardLayoutPr
                   Quick Actions
                 </h3>
                 <div className="space-y-2">
-                  <button className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors">
+                  <button 
+                    onClick={() => handleQuickAction('add-student')}
+                    className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
+                  >
                     Add Student
                   </button>
-                  <button className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors">
+                  <button 
+                    onClick={() => handleQuickAction('create-assignment')}
+                    className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
+                  >
                     Create Assignment
                   </button>
-                  <button className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors">
+                  <button 
+                    onClick={() => handleQuickAction('send-message')}
+                    className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
+                  >
                     Send Message
                   </button>
-                  <button className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors">
+                  <button 
+                    onClick={() => handleQuickAction('generate-report')}
+                    className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
+                  >
                     Generate Report
                   </button>
                 </div>
@@ -172,6 +207,7 @@ export function DashboardLayout({ children, user, className }: DashboardLayoutPr
               <motion.button
                 whileHover={{ scale: 1.01 }}
                 whileTap={{ scale: 0.99 }}
+                onClick={() => handleQuickAction('add-student')}
                 className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors flex items-center"
               >
                 <svg className="w-4 h-4 mr-2 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -182,6 +218,7 @@ export function DashboardLayout({ children, user, className }: DashboardLayoutPr
               <motion.button
                 whileHover={{ scale: 1.01 }}
                 whileTap={{ scale: 0.99 }}
+                onClick={() => handleQuickAction('create-assignment')}
                 className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors flex items-center"
               >
                 <svg className="w-4 h-4 mr-2 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -192,6 +229,7 @@ export function DashboardLayout({ children, user, className }: DashboardLayoutPr
               <motion.button
                 whileHover={{ scale: 1.01 }}
                 whileTap={{ scale: 0.99 }}
+                onClick={() => handleQuickAction('send-message')}
                 className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors flex items-center"
               >
                 <svg className="w-4 h-4 mr-2 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -202,6 +240,7 @@ export function DashboardLayout({ children, user, className }: DashboardLayoutPr
               <motion.button
                 whileHover={{ scale: 1.01 }}
                 whileTap={{ scale: 0.99 }}
+                onClick={() => handleQuickAction('generate-report')}
                 className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors flex items-center"
               >
                 <svg className="w-4 h-4 mr-2 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
