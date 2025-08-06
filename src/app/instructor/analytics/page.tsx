@@ -12,13 +12,23 @@ export default function InstructorAnalyticsPage() {
     fetchDashboardData();
   }, [fetchDashboardData]);
 
-  const MetricCard = ({ title, value, unit, trend, trendValue, icon, color = 'primary' }: any) => {
+  interface MetricCardProps {
+    title: string;
+    value: string | number;
+    unit?: string;
+    trend?: 'up' | 'down';
+    trendValue?: string;
+    icon: React.ReactNode;
+    color?: 'primary' | 'success' | 'warning' | 'info';
+  }
+
+  const MetricCard = ({ title, value, unit, trend, trendValue, icon, color = 'primary' }: MetricCardProps) => {
     const colorClasses = {
       primary: 'border-primary-200 bg-primary-50',
       success: 'border-success-200 bg-success-50',
       warning: 'border-warning-200 bg-warning-50',
       info: 'border-info-200 bg-info-50',
-    }[color];
+    }[color] || 'border-gray-200 bg-gray-50';
 
     return (
       <div className={`p-6 rounded-lg border-2 ${colorClasses}`}>
@@ -34,7 +44,7 @@ export default function InstructorAnalyticsPage() {
                 trend === 'down' ? 'text-error-600' : 'text-gray-600'
               }`}>
                 <span className="text-sm font-medium">
-                  {trend === 'up' ? '↗' : trend === 'down' ? '↘' : '→'} {Math.abs(trendValue || 0)}%
+                  {trend === 'up' ? '↗' : trend === 'down' ? '↘' : '→'} {Math.abs(parseFloat(trendValue || '0'))}%
                 </span>
                 <span className="text-xs text-gray-500 ml-1">vs last month</span>
               </div>
@@ -88,8 +98,8 @@ export default function InstructorAnalyticsPage() {
                   title="Overall Completion Rate"
                   value={stats?.completionRate || 0}
                   unit="%"
-                  trend={stats?.trends.completionTrend >= 0 ? 'up' : 'down'}
-                  trendValue={stats?.trends.completionTrend}
+                  trend={(stats?.trends?.completionTrend ?? 0) >= 0 ? 'up' : 'down'}
+                  trendValue={stats?.trends?.completionTrend?.toString()}
                   color="success"
                   icon={<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
                 />
@@ -104,8 +114,8 @@ export default function InstructorAnalyticsPage() {
                   title="Average Accuracy"
                   value={stats?.averageAccuracy || 0}
                   unit="%"
-                  trend={stats?.trends.accuracyTrend >= 0 ? 'up' : 'down'}
-                  trendValue={stats?.trends.accuracyTrend}
+                  trend={(stats?.trends?.accuracyTrend ?? 0) >= 0 ? 'up' : 'down'}
+                  trendValue={stats?.trends?.accuracyTrend?.toString()}
                   color="primary"
                   icon={<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>}
                 />
@@ -120,8 +130,8 @@ export default function InstructorAnalyticsPage() {
                   title="Student Engagement"
                   value={stats?.engagementScore || 0}
                   unit="%"
-                  trend={stats?.trends.engagementTrend >= 0 ? 'up' : 'down'}
-                  trendValue={stats?.trends.engagementTrend}
+                  trend={(stats?.trends?.engagementTrend ?? 0) >= 0 ? 'up' : 'down'}
+                  trendValue={stats?.trends?.engagementTrend?.toString()}
                   color="info"
                   icon={<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>}
                 />
@@ -135,8 +145,8 @@ export default function InstructorAnalyticsPage() {
                 <MetricCard
                   title="Active Students"
                   value={stats?.activeStudents || 0}
-                  trend={stats?.trends.enrollmentTrend >= 0 ? 'up' : 'down'}
-                  trendValue={stats?.trends.enrollmentTrend}
+                  trend={(stats?.trends?.enrollmentTrend ?? 0) >= 0 ? 'up' : 'down'}
+                  trendValue={stats?.trends?.enrollmentTrend?.toString()}
                   color="success"
                   icon={<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" /></svg>}
                 />
@@ -165,8 +175,8 @@ export default function InstructorAnalyticsPage() {
                   title="Retention Rate"
                   value={stats?.retentionRate || 0}
                   unit="%"
-                  trend={stats?.trends.retentionTrend >= 0 ? 'up' : 'down'}
-                  trendValue={stats?.trends.retentionTrend}
+                  trend={(stats?.trends?.retentionTrend ?? 0) >= 0 ? 'up' : 'down'}
+                  trendValue={stats?.trends?.retentionTrend?.toString()}
                   color="success"
                   icon={<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>}
                 />
@@ -247,10 +257,10 @@ export default function InstructorAnalyticsPage() {
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Monthly Trends</h3>
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 {[
-                  { metric: 'New Enrollments', value: stats?.newEnrollmentsThisMonth || 0, change: stats?.trends.enrollmentTrend || 0 },
-                  { metric: 'Completion Rate', value: `${stats?.completionRate || 0}%`, change: stats?.trends.completionTrend || 0 },
-                  { metric: 'Average Accuracy', value: `${stats?.averageAccuracy || 0}%`, change: stats?.trends.accuracyTrend || 0 },
-                  { metric: 'Engagement Score', value: `${stats?.engagementScore || 0}%`, change: stats?.trends.engagementTrend || 0 }
+                  { metric: 'New Enrollments', value: stats?.newEnrollmentsThisMonth || 0, change: stats?.trends?.enrollmentTrend || 0 },
+                  { metric: 'Completion Rate', value: `${stats?.completionRate || 0}%`, change: stats?.trends?.completionTrend || 0 },
+                  { metric: 'Average Accuracy', value: `${stats?.averageAccuracy || 0}%`, change: stats?.trends?.accuracyTrend || 0 },
+                  { metric: 'Engagement Score', value: `${stats?.engagementScore || 0}%`, change: stats?.trends?.engagementTrend || 0 }
                 ].map((trend, index) => (
                   <div key={trend.metric} className="text-center p-4 bg-gray-50 rounded-lg">
                     <div className="text-2xl font-bold text-gray-900 mb-1">{trend.value}</div>

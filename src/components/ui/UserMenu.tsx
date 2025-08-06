@@ -24,6 +24,14 @@ const UserMenu: React.FC<UserMenuProps> = ({ className }) => {
   const router = useRouter();
   const { user, logout } = useAppStore();
 
+  // Debug logging
+  useEffect(() => {
+    console.log('🎯 UserMenu: Component mounted/updated');
+    console.log('🎯 UserMenu: user:', user);
+    console.log('🎯 UserMenu: router:', router);
+    console.log('🎯 UserMenu: isOpen:', isOpen);
+  });
+
   // Close menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: Event) => {
@@ -118,28 +126,58 @@ const UserMenu: React.FC<UserMenuProps> = ({ className }) => {
   }, [isOpen]);
 
   const handleMenuToggle = () => {
+    console.log('🎯 UserMenu: handleMenuToggle called, current isOpen:', isOpen);
     setIsOpen(!isOpen);
+    console.log('🎯 UserMenu: setIsOpen called with:', !isOpen);
   };
 
   const handleMenuItemClick = (action: () => void) => {
-    action();
+    console.log('🎯 UserMenu: handleMenuItemClick called');
+    try {
+      action();
+      console.log('🎯 UserMenu: action executed successfully');
+    } catch (error) {
+      console.error('🎯 UserMenu: action failed:', error);
+    }
     setIsOpen(false);
+    console.log('🎯 UserMenu: menu closed after action');
   };
 
   const handleProfile = () => {
-    router.push('/profile');
+    console.log('🎯 UserMenu: handleProfile called');
+    console.log('🎯 UserMenu: router object:', router);
+    try {
+      router.push('/profile');
+      console.log('🎯 UserMenu: router.push("/profile") called');
+    } catch (error) {
+      console.error('🎯 UserMenu: router.push failed:', error);
+    }
   };
 
   const handleSettings = () => {
-    // For now, we'll navigate to profile as settings might be part of it
-    router.push('/profile');
+    console.log('🎯 UserMenu: handleSettings called');
+    try {
+      // For now, we'll navigate to profile as settings might be part of it
+      router.push('/profile');
+      console.log('🎯 UserMenu: router.push("/profile") called from settings');
+    } catch (error) {
+      console.error('🎯 UserMenu: settings router.push failed:', error);
+    }
   };
 
 
 
   const handleLogout = () => {
-    logout();
-    router.push('/login');
+    console.log('🎯 UserMenu: handleLogout called');
+    console.log('🎯 UserMenu: user before logout:', user);
+    try {
+      logout();
+      console.log('🎯 UserMenu: logout() called successfully');
+      router.push('/login');
+      console.log('🎯 UserMenu: router.push("/login") called');
+    } catch (error) {
+      console.error('🎯 UserMenu: logout failed:', error);
+    }
   };
 
   const menuItems = [
@@ -158,7 +196,15 @@ const UserMenu: React.FC<UserMenuProps> = ({ className }) => {
     {
       icon: ShieldCheckIcon,
       label: 'Training Records',
-      action: () => router.push('/progress'),
+      action: () => {
+        console.log('🎯 UserMenu: Training Records action called');
+        try {
+          router.push('/progress');
+          console.log('🎯 UserMenu: router.push("/progress") called');
+        } catch (error) {
+          console.error('🎯 UserMenu: progress router.push failed:', error);
+        }
+      },
       description: 'View your training history'
     },
 
@@ -176,7 +222,17 @@ const UserMenu: React.FC<UserMenuProps> = ({ className }) => {
       {/* Menu Toggle Button */}
       <button
         ref={buttonRef}
-        onClick={handleMenuToggle}
+        onClick={(e) => {
+          console.log('🎯 UserMenu: Button clicked, event:', e);
+          console.log('🎯 UserMenu: Event target:', e.target);
+          console.log('🎯 UserMenu: Event currentTarget:', e.currentTarget);
+          e.preventDefault();
+          e.stopPropagation();
+          handleMenuToggle();
+        }}
+        onMouseDown={(e) => {
+          console.log('🎯 UserMenu: Button mouse down');
+        }}
         className={cn(
           'w-10 h-10 flex items-center justify-center rounded-full transition-all duration-200 relative',
           'focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2',
@@ -185,6 +241,11 @@ const UserMenu: React.FC<UserMenuProps> = ({ className }) => {
             ? 'bg-primary-700 text-white shadow-lg scale-105' 
             : 'bg-primary-600 hover:bg-primary-700 text-white hover:shadow-md hover:scale-105'
         )}
+        style={{
+          pointerEvents: 'auto',
+          zIndex: 1000,
+          cursor: 'pointer'
+        }}
         aria-label="Open user menu"
         aria-expanded={isOpen}
         aria-haspopup="true"
@@ -293,7 +354,12 @@ const UserMenu: React.FC<UserMenuProps> = ({ className }) => {
               {menuItems.map((item, index) => (
                 <button
                   key={index}
-                  onClick={() => handleMenuItemClick(item.action)}
+                  onClick={(e) => {
+                    console.log('🎯 UserMenu: Menu item clicked:', item.label, e);
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleMenuItemClick(item.action);
+                  }}
                   onKeyDown={(e) => {
                     if (e.key === 'ArrowDown') {
                       e.preventDefault();

@@ -23,6 +23,15 @@ model User {
   phone     String?
   avatar    String?
   
+  // Extended profile fields
+  yearsOfExperience Int?    @map("years_of_experience")
+  address          String?
+  city             String?
+  state            String?
+  zipCode          String? @map("zip_code")
+  emergencyContact String? @map("emergency_contact")
+  emergencyPhone   String? @map("emergency_phone")
+  
   // Settings
   emailVerified DateTime? @map("email_verified")
   createdAt     DateTime  @default(now()) @map("created_at")
@@ -40,6 +49,7 @@ model User {
   progress            Progress[]
   achievements        UserAchievement[]
   voiceSettings       VoiceSettings?
+  preferences         UserPreferences?
   accounts            Account[]
   sessions            Session[]
   
@@ -371,6 +381,21 @@ model PhoneticAlphabet {
   updatedAt    DateTime @updatedAt @map("updated_at")
   
   @@map("phonetic_alphabet")
+}
+
+// User preferences model
+model UserPreferences {
+  id          String   @id @default(cuid())
+  userId      String   @unique @map("user_id")
+  preferences Json     // JSON object containing all user preferences
+  
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  
+  // Relationships
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("user_preferences")
 }
 
 // Indexes are defined within each model above

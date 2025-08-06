@@ -240,6 +240,7 @@ function InstructorDashboardContent() {
     high: 'border-l-warning-500 bg-warning-50',
     medium: 'border-l-info-500 bg-info-50',
     low: 'border-l-gray-500 bg-gray-50',
+    info: 'border-l-blue-500 bg-blue-50',
   };
 
   if (isLoading) {

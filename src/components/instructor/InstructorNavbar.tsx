@@ -37,14 +37,34 @@ export function InstructorNavbar({ user, onMenuToggle, sidebarOpen }: Instructor
   }, []);
 
   const handleSignOut = async () => {
-    await signOut({ 
-      callbackUrl: '/instructor/login',
-      redirect: true 
-    });
+    console.log('🎯 Sign out button clicked');
+    try {
+      await signOut({ 
+        callbackUrl: '/instructor/login',
+        redirect: true 
+      });
+      console.log('✅ Sign out successful');
+    } catch (error) {
+      console.error('❌ Sign out error:', error);
+    }
   };
 
   const handleSwitchToStudent = () => {
-    router.push('/dashboard');
+    console.log('🎯 Switch to student view button clicked');
+    try {
+      router.push('/dashboard');
+      console.log('✅ Navigation to student dashboard initiated');
+    } catch (error) {
+      console.error('❌ Navigation error:', error);
+    }
+  };
+
+  const handleQuickAssignment = () => {
+    router.push('/instructor/assignments/create');
+  };
+
+  const handleAddStudent = () => {
+    router.push('/instructor/students/add');
   };
 
   // Generate initials from user name
@@ -108,8 +128,10 @@ export function InstructorNavbar({ user, onMenuToggle, sidebarOpen }: Instructor
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
+                onClick={handleQuickAssignment}
                 className="p-2 text-gray-400 hover:text-gray-500 hover:bg-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
                 title="Quick Assignment"
+                aria-label="Create a new assignment"
               >
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -119,8 +141,10 @@ export function InstructorNavbar({ user, onMenuToggle, sidebarOpen }: Instructor
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
+                onClick={handleAddStudent}
                 className="p-2 text-gray-400 hover:text-gray-500 hover:bg-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
                 title="Add Student"
+                aria-label="Add a new student"
               >
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -299,7 +323,9 @@ export function InstructorNavbar({ user, onMenuToggle, sidebarOpen }: Instructor
                       </Link>
 
                       <button
-                        onClick={() => {
+                        onClick={(e) => {
+                          console.log('🎯 Switch to Student View button clicked - event triggered');
+                          e.preventDefault();
                           setShowProfileMenu(false);
                           handleSwitchToStudent();
                         }}
@@ -315,7 +341,9 @@ export function InstructorNavbar({ user, onMenuToggle, sidebarOpen }: Instructor
                     {/* Sign out */}
                     <div className="border-t border-gray-100 pt-1">
                       <button
-                        onClick={() => {
+                        onClick={(e) => {
+                          console.log('🎯 Sign out button clicked - event triggered');
+                          e.preventDefault();
                           setShowProfileMenu(false);
                           handleSignOut();
                         }}

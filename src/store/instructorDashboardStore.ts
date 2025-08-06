@@ -98,29 +98,93 @@ export const useInstructorDashboardStore = create<DashboardStore>()(
       assignments: [],
 
       // Actions
-      fetchDashboardData: async () => {
+      fetchDashboardData: async (retryCount = 0) => {
         set({ isLoading: true, error: null })
 
         try {
-          const response = await fetch('/api/instructor/dashboard')
+          const response = await fetch('/api/instructor/dashboard', {
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            // Add timeout to prevent hanging requests
+            signal: AbortSignal.timeout(10000) // 10 second timeout
+          })
+          
           const data = await response.json()
 
           if (!response.ok) {
-            throw new Error(data.message || 'Failed to load dashboard data')
+            const errorMsg = data.message || data.error || `Server error: ${response.status}`;
+            console.error('Dashboard API error:', {
+              status: response.status,
+              statusText: response.statusText,
+              error: errorMsg,
+              data
+            });
+            
+            // Handle specific error types
+            if (response.status === 503 || response.status === 502) {
+              throw new Error('Database connection failed. Please try again in a moment.');
+            }
+            
+            if (response.status === 401) {
+              throw new Error('Authentication failed. Please log in again.');
+            }
+            
+            if (response.status === 403) {
+              throw new Error('Access denied. Insufficient permissions.');
+            }
+            
+            throw new Error(errorMsg);
           }
+
+          console.log('Dashboard data loaded successfully:', {
+            hasStats: !!data.stats,
+            activityCount: data.recentActivity?.length || 0,
+            alertsCount: data.alerts?.length || 0
+          });
 
           set({
             stats: data.stats,
             recentActivity: data.recentActivity || [],
             alerts: data.alerts || [],
             assignments: data.assignments || [],
-            isLoading: false
+            isLoading: false,
+            error: null
           })
         } catch (error) {
+          console.error('Dashboard fetch error:', error);
+          
+          let errorMessage = 'Failed to load dashboard data';
+          
+          if (error instanceof Error) {
+            if (error.name === 'TimeoutError' || error.message.includes('timeout')) {
+              errorMessage = 'Request timed out. Please check your connection and try again.';
+            } else if (error.message.includes('fetch')) {
+              errorMessage = 'Network error. Please check your connection and try again.';
+            } else {
+              errorMessage = error.message;
+            }
+          }
+          
           set({
             isLoading: false,
-            error: error instanceof Error ? error.message : 'Failed to load dashboard data'
+            error: errorMessage
           })
+          
+          // Auto-retry on network errors (max 2 retries)
+          if (retryCount < 2 && (
+            errorMessage.includes('Network error') ||
+            errorMessage.includes('timeout') ||
+            errorMessage.includes('Database connection failed')
+          )) {
+            console.log(`Retrying dashboard fetch (attempt ${retryCount + 1})...`);
+            setTimeout(() => {
+              const currentState = get();
+              if (currentState.error) { // Only retry if still in error state
+                currentState.fetchDashboardData(retryCount + 1);
+              }
+            }, 1000 * (retryCount + 1)); // Exponential backoff
+          }
         }
       },
 

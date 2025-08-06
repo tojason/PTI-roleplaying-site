@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import { InstructorUser } from '@/types/instructor';
 import { InstructorNavbar } from './InstructorNavbar';
 import { BottomNavigation } from './BottomNavigation';
+import { useInstructorDashboard } from '@/hooks/useInstructorDashboard';
+import { getActivityColor, formatTimeAgo, formatTimeAgoShort } from '@/utils/activityUtils';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -17,6 +19,22 @@ interface DashboardLayoutProps {
 export function DashboardLayout({ children, user, className }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const router = useRouter();
+  
+  // Get dashboard data
+  const {
+    stats,
+    recentActivityDisplay,
+    activeAlertsCount,
+    averageAccuracy,
+    isLoading,
+    error,
+    refresh
+  } = useInstructorDashboard();
+
+  const handleRetry = () => {
+    console.log('Retrying dashboard data fetch...');
+    refresh();
+  };
 
   const handleQuickAction = (action: string) => {
     switch (action) {
@@ -106,16 +124,97 @@ export function DashboardLayout({ children, user, className }: DashboardLayoutPr
                 </div>
               </div>
 
-              {/* Recent Students */}
+              {/* Quick Stats - Mobile */}
               <div className="mb-6">
                 <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wide mb-3">
-                  Recent Students
+                  Overview
+                </h3>
+                {error ? (
+                  <div className="text-sm text-red-600 p-3 bg-red-50 rounded-lg">
+                    <div className="mb-2 font-medium">Failed to load data</div>
+                    <div className="mb-2 text-xs text-red-500">{error}</div>
+                    <button 
+                      onClick={handleRetry}
+                      disabled={isLoading}
+                      className="text-xs bg-red-100 hover:bg-red-200 disabled:opacity-50 px-2 py-1 rounded transition-colors"
+                    >
+                      {isLoading ? 'Retrying...' : 'Retry'}
+                    </button>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="bg-gray-50 rounded-lg p-2 text-center">
+                      <div className="text-sm font-bold text-gray-900">
+                        {isLoading ? '...' : (stats?.activeStudents || 0)}
+                      </div>
+                      <div className="text-xs text-gray-600">Active</div>
+                    </div>
+                    <div className="bg-gray-50 rounded-lg p-2 text-center">
+                      <div className="text-sm font-bold text-gray-900">
+                        {isLoading ? '...' : activeAlertsCount}
+                      </div>
+                      <div className="text-xs text-gray-600">Alerts</div>
+                    </div>
+                    <div className="bg-gray-50 rounded-lg p-2 text-center">
+                      <div className="text-sm font-bold text-gray-900">
+                        {isLoading ? '...' : averageAccuracy}
+                      </div>
+                      <div className="text-xs text-gray-600">Avg Score</div>
+                    </div>
+                    <div className="bg-gray-50 rounded-lg p-2 text-center">
+                      <div className="text-sm font-bold text-gray-900">
+                        {isLoading ? '...' : (stats?.newEnrollmentsThisMonth || 0)}
+                      </div>
+                      <div className="text-xs text-gray-600">New</div>
+                    </div>
+                  </div>
+                )}
+              </div>
+              
+              {/* Recent Activity - Mobile */}
+              <div className="mb-6">
+                <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wide mb-3">
+                  Recent Activity
                 </h3>
                 <div className="space-y-2">
-                  {/* Placeholder for recent students */}
-                  <div className="text-sm text-gray-500">
-                    Student list will appear here
-                  </div>
+                  {error ? (
+                    <div className="text-sm text-gray-500">
+                      Unable to load activity
+                    </div>
+                  ) : isLoading ? (
+                    <div className="space-y-2">
+                      {[1, 2].map((i) => (
+                        <div key={i} className="animate-pulse flex items-start space-x-2">
+                          <div className="w-1.5 h-1.5 bg-gray-300 rounded-full mt-1.5 flex-shrink-0"></div>
+                          <div className="flex-1 space-y-1">
+                            <div className="h-3 bg-gray-300 rounded w-3/4"></div>
+                            <div className="h-2 bg-gray-300 rounded w-1/2"></div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : recentActivityDisplay.length > 0 ? (
+                    recentActivityDisplay.slice(0, 2).map((activity) => (
+                      <div key={activity.id} className="text-sm text-gray-600">
+                        <div className="flex items-start space-x-2">
+                          <div className={`w-1.5 h-1.5 ${getActivityColor(activity.type)} rounded-full mt-1.5 flex-shrink-0`}></div>
+                          <div>
+                            <p className="text-xs font-medium text-gray-900 leading-tight">
+                              {activity.studentName ? `${activity.studentName} ` : ''}
+                              {activity.title}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {formatTimeAgoShort(activity.timestamp)}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-sm text-gray-500">
+                      No recent activity
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -178,24 +277,54 @@ export function DashboardLayout({ children, user, className }: DashboardLayoutPr
             <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wide mb-3">
               Today's Overview
             </h3>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="bg-gray-50 rounded-lg p-3 text-center">
-                <div className="text-lg font-bold text-gray-900">24</div>
-                <div className="text-xs text-gray-600">Active Students</div>
+            {error ? (
+              <div className="text-sm text-red-600 p-3 bg-red-50 rounded-lg">
+                <div className="mb-2 font-medium">Failed to load dashboard data</div>
+                <div className="mb-2 text-xs text-red-500">{error}</div>
+                <div className="flex gap-2">
+                  <button 
+                    onClick={handleRetry}
+                    disabled={isLoading}
+                    className="text-xs bg-red-100 hover:bg-red-200 disabled:opacity-50 px-2 py-1 rounded transition-colors"
+                  >
+                    {isLoading ? 'Retrying...' : 'Retry'}
+                  </button>
+                  <button 
+                    onClick={() => window.location.reload()}
+                    className="text-xs bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded transition-colors"
+                  >
+                    Reload Page
+                  </button>
+                </div>
               </div>
-              <div className="bg-gray-50 rounded-lg p-3 text-center">
-                <div className="text-lg font-bold text-gray-900">3</div>
-                <div className="text-xs text-gray-600">Alerts</div>
+            ) : (
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-gray-50 rounded-lg p-3 text-center">
+                  <div className="text-lg font-bold text-gray-900">
+                    {isLoading ? '...' : (stats?.activeStudents || 0)}
+                  </div>
+                  <div className="text-xs text-gray-600">Active Students</div>
+                </div>
+                <div className="bg-gray-50 rounded-lg p-3 text-center">
+                  <div className="text-lg font-bold text-gray-900">
+                    {isLoading ? '...' : activeAlertsCount}
+                  </div>
+                  <div className="text-xs text-gray-600">Alerts</div>
+                </div>
+                <div className="bg-gray-50 rounded-lg p-3 text-center">
+                  <div className="text-lg font-bold text-gray-900">
+                    {isLoading ? '...' : averageAccuracy}
+                  </div>
+                  <div className="text-xs text-gray-600">Avg Score</div>
+                </div>
+                <div className="bg-gray-50 rounded-lg p-3 text-center">
+                  <div className="text-lg font-bold text-gray-900">
+                    {isLoading ? '...' : (stats?.newEnrollmentsThisMonth || 0)}
+                  </div>
+                  <div className="text-xs text-gray-600">New Students</div>
+                </div>
               </div>
-              <div className="bg-gray-50 rounded-lg p-3 text-center">
-                <div className="text-lg font-bold text-gray-900">85%</div>
-                <div className="text-xs text-gray-600">Avg Score</div>
-              </div>
-              <div className="bg-gray-50 rounded-lg p-3 text-center">
-                <div className="text-lg font-bold text-gray-900">12</div>
-                <div className="text-xs text-gray-600">New Messages</div>
-              </div>
-            </div>
+            )}
           </div>
 
           {/* Quick Actions */}
@@ -257,33 +386,44 @@ export function DashboardLayout({ children, user, className }: DashboardLayoutPr
               Recent Activity
             </h3>
             <div className="space-y-3">
-              <div className="text-sm text-gray-600">
-                <div className="flex items-start space-x-2">
-                  <div className="w-2 h-2 bg-success-500 rounded-full mt-2 flex-shrink-0"></div>
-                  <div>
-                    <p className="font-medium text-gray-900">Johnson, M. completed Quiz</p>
-                    <p className="text-xs text-gray-500">2 minutes ago</p>
-                  </div>
+              {error ? (
+                <div className="text-sm text-gray-500">
+                  Unable to load recent activity
                 </div>
-              </div>
-              <div className="text-sm text-gray-600">
-                <div className="flex items-start space-x-2">
-                  <div className="w-2 h-2 bg-info-500 rounded-full mt-2 flex-shrink-0"></div>
-                  <div>
-                    <p className="font-medium text-gray-900">New student enrolled</p>
-                    <p className="text-xs text-gray-500">15 minutes ago</p>
-                  </div>
+              ) : isLoading ? (
+                <div className="space-y-3">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="animate-pulse flex items-start space-x-2">
+                      <div className="w-2 h-2 bg-gray-300 rounded-full mt-2 flex-shrink-0"></div>
+                      <div className="flex-1 space-y-1">
+                        <div className="h-4 bg-gray-300 rounded w-3/4"></div>
+                        <div className="h-3 bg-gray-300 rounded w-1/2"></div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              </div>
-              <div className="text-sm text-gray-600">
-                <div className="flex items-start space-x-2">
-                  <div className="w-2 h-2 bg-warning-500 rounded-full mt-2 flex-shrink-0"></div>
-                  <div>
-                    <p className="font-medium text-gray-900">Chen, L. needs attention</p>
-                    <p className="text-xs text-gray-500">1 hour ago</p>
+              ) : recentActivityDisplay.length > 0 ? (
+                recentActivityDisplay.map((activity) => (
+                  <div key={activity.id} className="text-sm text-gray-600">
+                    <div className="flex items-start space-x-2">
+                      <div className={`w-2 h-2 ${getActivityColor(activity.type)} rounded-full mt-2 flex-shrink-0`}></div>
+                      <div>
+                        <p className="font-medium text-gray-900">
+                          {activity.studentName ? `${activity.studentName} ` : ''}
+                          {activity.title}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {formatTimeAgo(activity.timestamp)}
+                        </p>
+                      </div>
+                    </div>
                   </div>
+                ))
+              ) : (
+                <div className="text-sm text-gray-500">
+                  No recent activity
                 </div>
-              </div>
+              )}
             </div>
           </div>
         </div>

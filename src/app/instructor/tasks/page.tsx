@@ -202,12 +202,7 @@ export default function InstructorTasksPage() {
                       <div className="flex items-center space-x-4 text-sm text-gray-600">
                         <span>{formatDueDate(task.dueDate)}</span>
                         
-                        {task.studentName && (
-                          <>
-                            <span className="text-gray-400">•</span>
-                            <span>Student: <span className="font-medium">{task.studentName}</span></span>
-                          </>
-                        )}
+                        {/* Student info would be shown if task type included it */}
                         
                         <span className="text-gray-400">•</span>
                         <span className="capitalize">{task.category?.replace('_', ' ') || 'General'}</span>

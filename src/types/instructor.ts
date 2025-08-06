@@ -378,6 +378,7 @@ export interface Activity {
     accuracy?: number;
     module?: string;
     assignment?: string;
+    achievement?: string;
     oldValue?: any;
     newValue?: any;
   };
