@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { hash } from 'bcryptjs'
 import { z } from 'zod'
-import { prisma } from '@/lib/db'
+import { prisma } from '@/lib/db-server'
 import { handleAPIError } from '@/lib/middleware'
 
 // Validation schema for user registration

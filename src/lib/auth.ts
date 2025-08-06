@@ -1,8 +1,9 @@
+import 'server-only'
 import { NextAuthOptions, User } from 'next-auth'
 import { PrismaAdapter } from '@next-auth/prisma-adapter'
 import CredentialsProvider from 'next-auth/providers/credentials'
 import { compare } from 'bcryptjs'
-import { prisma } from './db'
+import { prisma } from './db-server'
 // UserRole type will be generated from Prisma schema
 type UserRole = 'USER' | 'INSTRUCTOR' | 'ADMIN' | 'SUPER_ADMIN'
 
@@ -59,6 +60,69 @@ export const authOptions: NextAuthOptions = {
         }
 
         try {
+          // Development mode - allow mock instructor login
+          if (process.env.NODE_ENV === 'development') {
+            // Mock instructor credentials for development
+            const mockInstructors = [
+              {
+                pid: 'INS001',
+                password: 'instructor123',
+                id: 'mock-instructor-1',
+                email: 'instructor@department.gov',
+                name: 'Officer Sarah Rodriguez',
+                role: 'INSTRUCTOR' as const,
+                badgeNumber: 'MPD-2024',
+                department: 'Metro Police Department',
+                rank: 'Sergeant'
+              },
+              {
+                pid: credentials.pid, // Allow any PID in development
+                password: 'dev123',
+                id: 'dev-instructor-' + credentials.pid,
+                email: `${credentials.pid}@department.gov`,
+                name: `Instructor ${credentials.pid}`,
+                role: 'INSTRUCTOR' as const,
+                badgeNumber: 'DEV-001',
+                department: 'Development Department',
+                rank: 'Officer'
+              }
+            ];
+
+            // Check for specific predefined instructor first
+            let mockUser = mockInstructors.find(u => 
+              u.pid === credentials.pid && u.password === credentials.password
+            );
+            
+            // If not found, allow any PID with dev123 password
+            if (!mockUser && credentials.password === 'dev123') {
+              mockUser = {
+                pid: credentials.pid,
+                password: 'dev123',
+                id: 'dev-instructor-' + credentials.pid,
+                email: `${credentials.pid}@department.gov`,
+                name: `Instructor ${credentials.pid}`,
+                role: 'INSTRUCTOR' as const,
+                badgeNumber: 'DEV-001',
+                department: 'Development Department',
+                rank: 'Officer'
+              };
+            }
+
+            if (mockUser) {
+              return {
+                id: mockUser.id,
+                email: mockUser.email,
+                name: mockUser.name,
+                role: mockUser.role,
+                pid: mockUser.pid,
+                badgeNumber: mockUser.badgeNumber,
+                department: mockUser.department,
+                rank: mockUser.rank,
+              };
+            }
+          }
+
+          // Production mode - use database
           // Find user by PID
           const user = await prisma.user.findFirst({
             where: {
@@ -148,11 +212,27 @@ export const authOptions: NextAuthOptions = {
       return session
     },
     async redirect({ url, baseUrl }) {
-      // Allows relative callback URLs
-      if (url.startsWith('/')) return `${baseUrl}${url}`
-      // Allows callback URLs on the same origin
-      else if (new URL(url).origin === baseUrl) return url
-      return baseUrl
+      // If url is relative, make it absolute
+      if (url.startsWith('/')) {
+        url = `${baseUrl}${url}`;
+      }
+      
+      // Only allow redirects to same origin
+      try {
+        const redirectUrl = new URL(url);
+        const baseUrlObj = new URL(baseUrl);
+        
+        if (redirectUrl.origin !== baseUrlObj.origin) {
+          // For security, only redirect within same origin
+          return baseUrl;
+        }
+      } catch {
+        // Invalid URL, use default redirect
+        return baseUrl;
+      }
+      
+      // For development, allow all same-origin redirects
+      return url;
     }
   },
   pages: {
@@ -185,6 +265,57 @@ export function hasRole(userRole: UserRole, requiredRole: UserRole): boolean {
   return roleHierarchy[userRole] >= roleHierarchy[requiredRole]
 }
 
+// Enhanced role checking with additional context
+export function hasRoleWithContext(
+  userRole: UserRole, 
+  requiredRole: UserRole,
+  context?: {
+    userDepartment?: string
+    targetDepartment?: string
+    resourceOwnerId?: string
+    userId?: string
+  }
+): boolean {
+  // Check basic role hierarchy first
+  if (!hasRole(userRole, requiredRole)) {
+    return false
+  }
+  
+  // If no context provided, basic role check is sufficient
+  if (!context) {
+    return true
+  }
+  
+  // Super admins always have access
+  if (userRole === 'SUPER_ADMIN') {
+    return true
+  }
+  
+  // Admins have access unless specifically restricted
+  if (userRole === 'ADMIN') {
+    return true
+  }
+  
+  // Instructors need department or ownership validation
+  if (userRole === 'INSTRUCTOR') {
+    // Check department match if departments are provided
+    if (context.userDepartment && context.targetDepartment) {
+      if (context.userDepartment !== context.targetDepartment) {
+        return false
+      }
+    }
+    
+    // Check resource ownership if provided
+    if (context.resourceOwnerId && context.userId) {
+      if (context.resourceOwnerId !== context.userId) {
+        return false
+      }
+    }
+  }
+  
+  return true
+}
+
 export function canAccessResource(userRole: UserRole, resourceOwner: string, userId: string): boolean {
   // Super admins and admins can access everything
   if (userRole === 'SUPER_ADMIN' || userRole === 'ADMIN') {
@@ -215,4 +346,197 @@ export function canViewAllProgress(userRole: UserRole): boolean {
 
 export function canModifySystemSettings(userRole: UserRole): boolean {
   return userRole === 'SUPER_ADMIN'
+}
+
+// Instructor-specific authorization functions
+export function isInstructor(userRole: UserRole): boolean {
+  return hasRole(userRole, 'INSTRUCTOR')
+}
+
+export function canAccessInstructorDashboard(userRole: UserRole): boolean {
+  return hasRole(userRole, 'INSTRUCTOR')
+}
+
+export function canManageStudents(userRole: UserRole): boolean {
+  return hasRole(userRole, 'INSTRUCTOR')
+}
+
+export function canCreateAssignments(userRole: UserRole): boolean {
+  return hasRole(userRole, 'INSTRUCTOR')
+}
+
+export function canViewAnalytics(userRole: UserRole): boolean {
+  return hasRole(userRole, 'INSTRUCTOR')
+}
+
+export function canSendMessages(userRole: UserRole): boolean {
+  return hasRole(userRole, 'INSTRUCTOR')
+}
+
+export function canGenerateReports(userRole: UserRole): boolean {
+  return hasRole(userRole, 'INSTRUCTOR')
+}
+
+export function canManageInstructors(userRole: UserRole): boolean {
+  return hasRole(userRole, 'ADMIN')
+}
+
+export function canAccessDepartmentSettings(userRole: UserRole): boolean {
+  return hasRole(userRole, 'ADMIN')
+}
+
+export function canAccessSystemManagement(userRole: UserRole): boolean {
+  return userRole === 'SUPER_ADMIN'
+}
+
+// Department-based access control
+export function canAccessDepartmentData(
+  userRole: UserRole, 
+  userDepartment: string | undefined, 
+  targetDepartment: string
+): boolean {
+  // Super admins and admins can access all departments
+  if (userRole === 'SUPER_ADMIN' || userRole === 'ADMIN') {
+    return true
+  }
+  
+  // Instructors can only access their own department
+  if (userRole === 'INSTRUCTOR') {
+    return userDepartment === targetDepartment
+  }
+  
+  return false
+}
+
+// Student access control for instructors
+export function canAccessStudentData(
+  userRole: UserRole,
+  userDepartment: string | undefined,
+  studentDepartment: string,
+  studentId?: string,
+  assignedStudents?: string[]
+): boolean {
+  // Super admins and admins can access all students
+  if (userRole === 'SUPER_ADMIN' || userRole === 'ADMIN') {
+    return true
+  }
+  
+  // Instructors can access students in their department
+  if (userRole === 'INSTRUCTOR') {
+    // Check department match
+    const departmentMatch = userDepartment === studentDepartment
+    
+    // If specific student list is provided, check assignment
+    if (assignedStudents && studentId) {
+      return departmentMatch && assignedStudents.includes(studentId)
+    }
+    
+    return departmentMatch
+  }
+  
+  return false
+}
+
+// Assignment permission control
+export function canAccessAssignment(
+  userRole: UserRole,
+  userDepartment: string | undefined,
+  assignmentDepartment: string,
+  assignmentCreatorId?: string,
+  userId?: string
+): boolean {
+  // Super admins and admins can access all assignments
+  if (userRole === 'SUPER_ADMIN' || userRole === 'ADMIN') {
+    return true
+  }
+  
+  // Instructors can access assignments in their department
+  if (userRole === 'INSTRUCTOR') {
+    const departmentMatch = userDepartment === assignmentDepartment
+    
+    // If creator info is provided, check if they created it
+    if (assignmentCreatorId && userId) {
+      return departmentMatch && (assignmentCreatorId === userId)
+    }
+    
+    return departmentMatch
+  }
+  
+  return false
+}
+
+// Route-specific permission functions
+export function getInstructorRoutePermissions(userRole: UserRole): string[] {
+  const baseRoutes = []
+  
+  if (hasRole(userRole, 'INSTRUCTOR')) {
+    baseRoutes.push(
+      '/instructor/dashboard',
+      '/instructor/students',
+      '/instructor/analytics',
+      '/instructor/assignments',
+      '/instructor/reports',
+      '/instructor/messages',
+      '/instructor/settings'
+    )
+  }
+  
+  if (hasRole(userRole, 'ADMIN')) {
+    baseRoutes.push(
+      '/instructor/manage',
+      '/instructor/departments'
+    )
+  }
+  
+  if (userRole === 'SUPER_ADMIN') {
+    baseRoutes.push(
+      '/instructor/system'
+    )
+  }
+  
+  return baseRoutes
+}
+
+// Session validation for instructors
+export function validateInstructorSession(session: any): boolean {
+  if (!session?.user) return false
+  
+  const { user } = session
+  
+  // Check required fields
+  if (!user.id || !user.pid || !user.role) return false
+  
+  // Check if user has instructor privileges
+  if (!hasRole(user.role, 'INSTRUCTOR')) return false
+  
+  // Check if account is active (if this field exists)
+  // This would need to be added to the session if account status tracking is needed
+  
+  return true
+}
+
+// Token validation for API routes
+export function validateInstructorToken(token: any): boolean {
+  if (!token) return false
+  
+  // Check required fields
+  if (!token.id || !token.pid || !token.role) return false
+  
+  // Check if user has instructor privileges
+  if (!hasRole(token.role, 'INSTRUCTOR')) return false
+  
+  return true
+}
+
+// Helper function to get role-based default route
+function getRoleBasedDefaultRoute(userRole: UserRole, baseUrl: string): string {
+  switch (userRole) {
+    case 'SUPER_ADMIN':
+    case 'ADMIN':
+    case 'INSTRUCTOR':
+      return `${baseUrl}/instructor/dashboard`;
+    case 'USER':
+    default:
+      return `${baseUrl}/dashboard`;
+  }
 }

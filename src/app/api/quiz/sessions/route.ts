@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { prisma } from '@/lib/db'
+import { prisma } from '@/lib/db-server'
 import { createProtectedAPIHandler } from '@/lib/middleware'
 // Types will be generated from Prisma schema
 

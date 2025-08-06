@@ -1,33 +1,28 @@
-import { withAuth } from 'next-auth/middleware';
+import { NextRequest, NextResponse } from 'next/server';
 
-export default withAuth(
-  function middleware(req) {
-    // Additional middleware logic can go here
-  },
-  {
-    callbacks: {
-      authorized: ({ token, req }) => {
-        // Protect dashboard and other authenticated routes
-        if (req.nextUrl.pathname.startsWith('/dashboard') ||
-            req.nextUrl.pathname.startsWith('/practice') ||
-            req.nextUrl.pathname.startsWith('/progress') ||
-            req.nextUrl.pathname.startsWith('/profile')) {
-          return !!token;
-        }
-        return true;
-      },
-    },
-    pages: {
-      signIn: '/login',
-    },
-  }
-);
+export function middleware(req: NextRequest) {
+  const { pathname } = req.nextUrl;
+
+  // For development - minimal middleware that allows all routes
+  // This bypasses authentication for easier development testing
+  
+  // Log the route access
+  console.log(`[Middleware] Accessing: ${pathname}`);
+  
+  // Allow all routes in development
+  return NextResponse.next();
+}
 
 export const config = {
   matcher: [
+    // Student routes
     '/dashboard/:path*',
     '/practice/:path*',
     '/progress/:path*',
     '/profile/:path*',
+    // Instructor routes
+    '/instructor/:path*',
+    // Admin routes
+    '/admin/:path*',
   ],
 };

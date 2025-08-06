@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { hash, compare } from 'bcryptjs'
-import { prisma } from '@/lib/db'
+import { prisma } from '@/lib/db-server'
 import { createProtectedAPIHandler } from '@/lib/middleware'
 
 // Validation schema for profile updates

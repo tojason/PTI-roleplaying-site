@@ -34,6 +34,39 @@
     --color-background: #ffffff;
     --color-surface: #f8fafc;
     --color-border: #e2e8f0;
+    
+    /* Instructor-specific design tokens */
+    /* Authority & Status Colors */
+    --color-instructor-primary: #1e293b;
+    --color-instructor-secondary: #334155;
+    --color-instructor-accent: #0f766e;
+    
+    /* Data Visualization Palette */
+    --color-data-primary: #0ea5e9;
+    --color-data-secondary: #8b5cf6;
+    --color-data-tertiary: #f59e0b;
+    --color-data-quaternary: #10b981;
+    --color-data-neutral: #6b7280;
+    
+    /* Performance Status Colors */
+    --color-status-excellent: #059669;
+    --color-status-good: #10b981;
+    --color-status-satisfactory: #0891b2;
+    --color-status-needs-improvement: #f59e0b;
+    --color-status-at-risk: #dc2626;
+    --color-status-inactive: #9ca3af;
+    
+    /* Alert & Notification Colors */
+    --color-alert-critical: #dc2626;
+    --color-alert-high: #ea580c;
+    --color-alert-medium: #f59e0b;
+    --color-alert-low: #0891b2;
+    --color-alert-info: #3b82f6;
+    
+    /* Interactive States */
+    --color-instructor-hover: #475569;
+    --color-instructor-active: #0f172a;
+    --color-instructor-focus: #2563eb;
   }
 
   * {
@@ -62,6 +95,71 @@
 }
 
 @layer components {
+  /* Instructor layout styles */
+  .instructor-layout {
+    @apply min-h-screen bg-gray-50;
+  }
+  
+  .instructor-main {
+    @apply flex-1;
+  }
+  
+  /* Instructor form styles */
+  .instructor-form-card {
+    @apply bg-white rounded-lg shadow-xl p-8;
+  }
+  
+  .instructor-background {
+    background-color: var(--color-instructor-primary);
+  }
+  
+  /* Instructor button variants */
+  .btn-instructor-primary {
+    @apply bg-slate-800 hover:bg-slate-900 text-white font-medium;
+  }
+  
+  .btn-instructor-secondary {
+    @apply bg-slate-200 hover:bg-slate-300 text-slate-700 font-medium;
+  }
+  
+  /* Status indicators */
+  .status-excellent {
+    color: var(--color-status-excellent);
+    background-color: rgba(5, 150, 105, 0.1);
+  }
+  
+  .status-good {
+    color: var(--color-status-good);
+    background-color: rgba(16, 185, 129, 0.1);
+  }
+  
+  .status-at-risk {
+    color: var(--color-status-at-risk);
+    background-color: rgba(220, 38, 38, 0.1);
+  }
+  
+  .status-inactive {
+    color: var(--color-status-inactive);
+    background-color: rgba(156, 163, 175, 0.1);
+  }
+  
+  /* Alert styles */
+  .alert-critical {
+    @apply bg-red-50 border-red-200 text-red-800;
+  }
+  
+  .alert-high {
+    @apply bg-orange-50 border-orange-200 text-orange-800;
+  }
+  
+  .alert-medium {
+    @apply bg-yellow-50 border-yellow-200 text-yellow-800;
+  }
+  
+  .alert-low {
+    @apply bg-blue-50 border-blue-200 text-blue-800;
+  }
+  
   /* Safe area utilities for mobile devices */
   .safe-area-inset-top {
     padding-top: env(safe-area-inset-top);
