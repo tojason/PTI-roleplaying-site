@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { PasswordInput } from '@/components/ui/PasswordInput';
 import { Checkbox } from '@/components/ui/Checkbox';
 import { 
   ChevronLeftIcon, 
@@ -329,8 +330,7 @@ function InstructorRegisterForm() {
               required
             />
 
-            <Input
-              type="password"
+            <PasswordInput
               label="Password *"
               placeholder="••••••••••••••••"
               value={formData.password}
@@ -339,8 +339,7 @@ function InstructorRegisterForm() {
               required
             />
 
-            <Input
-              type="password"
+            <PasswordInput
               label="Confirm Password *"
               placeholder="••••••••••••••••"
               value={formData.confirmPassword}

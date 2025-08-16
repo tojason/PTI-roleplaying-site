@@ -6,6 +6,7 @@ import { signIn, useSession } from 'next-auth/react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { PasswordInput } from '@/components/ui/PasswordInput';
 import { Checkbox } from '@/components/ui/Checkbox';
 import { ChevronLeftIcon, ExclamationTriangleIcon, ShieldCheckIcon } from '@heroicons/react/24/outline';
 import { useInstructorStore } from '@/store/instructorStore';
@@ -356,8 +357,7 @@ function InstructorLoginForm() {
               style={{ textTransform: 'uppercase' }}
             />
 
-            <Input
-              type="password"
+            <PasswordInput
               label="Password"
               placeholder="••••••••••••••••"
               value={formData.password}

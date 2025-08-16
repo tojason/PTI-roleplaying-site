@@ -8,6 +8,7 @@ import { useAppStore } from '@/store/useAppStore';
 import { Layout } from '@/components/layout/Layout';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { PasswordInput } from '@/components/ui/PasswordInput';
 import { Checkbox } from '@/components/ui/Checkbox';
 import { ChevronLeftIcon, ExclamationTriangleIcon, ShieldCheckIcon } from '@heroicons/react/24/outline';
 import { LoginFormData } from '@/types';
@@ -343,8 +344,7 @@ function LoginForm() {
             required
           />
 
-          <Input
-            type="password"
+          <PasswordInput
             label="Password"
             placeholder="••••••••••••••••"
             value={formData.password}

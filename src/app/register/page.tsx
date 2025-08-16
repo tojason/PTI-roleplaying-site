@@ -8,6 +8,7 @@ import { useAppStore } from '@/store/useAppStore';
 import { Layout } from '@/components/layout/Layout';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { PasswordInput } from '@/components/ui/PasswordInput';
 import { ChevronLeftIcon } from '@heroicons/react/24/outline';
 
 interface RegisterFormData {
@@ -176,8 +177,7 @@ export default function RegisterPage() {
             />
 
 
-            <Input
-              type="password"
+            <PasswordInput
               label="Password"
               placeholder="••••••••••••••••"
               value={formData.password}
@@ -187,8 +187,7 @@ export default function RegisterPage() {
               required
             />
 
-            <Input
-              type="password"
+            <PasswordInput
               label="Confirm Password"
               placeholder="••••••••••••••••"
               value={formData.confirmPassword}
